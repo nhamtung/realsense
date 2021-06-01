@@ -1,0 +1,54 @@
+<launch>
+    <arg name="serial_no"             default=""/>
+    <arg name="json_file_path"        default=""/>
+    <arg name="camera"                default="camera"/>
+    
+    <arg name="resolution"    default="qhd" />
+    <arg name="object_prefix" default="object"/>
+    <arg name="objects_path"  default=""/>
+    <arg name="gui"           default="true"/>
+    <arg name="settings_path" default="~/.ros/find_object_2d.ini"/>
+
+    <group ns="$(arg camera)">
+        <include file="$(find realsense2_camera)/launch/includes/nodelet.launch.xml">
+        <arg name="serial_no"         value="$(arg serial_no)"/>
+        <arg name="json_file_path"    value="$(arg json_file_path)"/>
+        <arg name="depth_width"       value="640"/>
+        <arg name="depth_height"      value="480"/>
+        <arg name="depth_fps"         value="30"/>
+        <arg name="color_width"       value="640"/>
+        <arg name="color_height"      value="480"/>
+        <arg name="color_fps"         value="30"/>
+        <arg name="enable_depth"      value="true"/>
+        <arg name="enable_color"      value="true"/>
+        <arg name="enable_infra1"     value="false"/>
+        <arg name="enable_infra2"     value="false"/>
+        <arg name="enable_fisheye"    value="false"/>
+        <arg name="enable_gyro"       value="false"/>
+        <arg name="enable_accel"      value="false"/>
+        <arg name="enable_pointcloud" value="true"/>
+        <arg name="enable_sync"       value="true"/>
+        <arg name="tf_prefix"         value="$(arg camera)"/>
+        </include>
+        <node name="rviz" pkg="rviz" type="rviz" args="-d $(find detect_obstacle)/rviz/rviz.rviz" required="true" />
+    </group>
+
+	<node name="pointcloud_to_laserscan" pkg="detect_obstacle" type="pointcloud_to_laserscan" output="screen">
+		<remap from="cloud_in" to="/camera/depth/color/points"/>
+		<remap from="scan" to="/camera/scan"/>
+        <rosparam>
+            target_frame: camera_link
+            transform_tolerance: 0.01
+            min_height: 0
+            max_height: 0.001
+            angle_min: -0.4            # rad
+            angle_max: 0.4             # rad
+            angle_increment: 0.0087     # M_PI/360
+            scan_time: 0.3333           # 1/30 s
+            range_min: 0.1
+            range_max: 1.0
+            use_inf: false
+            concurrency_level: 1
+        </rosparam>
+	</node>
+</launch>
